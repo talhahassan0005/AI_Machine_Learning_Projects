@@ -1,0 +1,41 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt 
+df= pd.read_csv('/student_data.csv')
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
+from mlxtend.plotting import plot_decision_regions
+
+ #we remove the Name column just to do the Preprocssing!
+# Preprocessing
+df=df.iloc[:,1:]
+
+
+# this is EDA step
+plt.scatter(df["IQ"],df["GPA"],c=df["Placement"]) # change the colors to differentiate between values !
+
+x=df.iloc[:,0:2]                #Separation of the columns
+y=df.iloc[:,-1]
+
+
+#  spliting the dataset (Separation of dataset into test and training)
+x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=0.1)  #10% of the data is used for Testing
+
+
+#Scaling
+scaler=StandardScaler()
+x_train=scaler.fit_transform(x_train)
+x_test=scaler.transform(x_test)
+
+
+# Training the Model
+clf=LogisticRegression()
+clf.fit(x_train,y_train)
+x_pred=clf.predict(x_test)
+accuracy_score(y_test,x_pred) 
+
+
+#visualizing the the Result in a Graph
+plot_decision_regions(x_train,y_train.values,clf=clf)
