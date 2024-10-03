@@ -1,0 +1,85 @@
+import cv2
+import os
+from PIL import Image
+import numpy as np
+from sklearn.model_selection import train_test_split
+from keras.utils import normalize
+from keras.models import Sequential
+from keras.layers import Dense, Activation, Flatten, Dropout, Conv2D, MaxPooling2D
+
+# Define directories for training and testing
+train_directory = '/content/dataset/Training'
+test_directory = '/content/dataset/Testing'
+
+
+# Define a mapping of folder names to class labels (e.g., 0 for 'no', 1 for 'glioma', etc.)
+class_labels = {
+    'notumor': 0,
+    'glioma': 1,
+    'meningioma': 2,
+    'pituitary': 3
+}
+
+# Create empty lists to store the dataset and labels
+dataset = []
+label = []
+
+# Function to load images from a given directory and assign labels based on folder names
+def load_images_from_folder(directory, label_mapping):
+    for folder_name in os.listdir(directory):  # e.g., 'no', 'glioma', 'meningioma', 'pituitary'
+        folder_path = os.path.join(directory, folder_name)
+        if not os.path.isdir(folder_path):
+            continue
+
+        for image_name in os.listdir(folder_path):
+            if image_name.split('.')[1] == 'jpg':
+                image = cv2.imread(os.path.join(folder_path, image_name))
+                image = Image.fromarray(image, 'RGB')
+                image = image.resize((64, 64))  # Resize to 64x64 pixels
+                dataset.append(np.array(image))  # Append the image to dataset
+                label.append(label_mapping[folder_name])  # Append the corresponding label
+
+# Load images from the training and testing directories
+load_images_from_folder(train_directory, class_labels)
+load_images_from_folder(test_directory, class_labels)
+
+# Convert lists to numpy arrays
+dataset = np.array(dataset)
+label = np.array(label)
+
+# Split dataset into training and testing (use test_size to reserve some data for testing)
+x_train, x_test, y_train, y_test = train_test_split(dataset, label, test_size=0.2, random_state=0)
+
+# Normalize the data
+x_train = normalize(x_train, axis=1)
+x_test = normalize(x_test, axis=1)
+
+# Build the CNN model
+model = Sequential()
+model.add(Conv2D(32, (3, 3), input_shape=(64, 64, 3)))
+model.add(Activation('relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+
+model.add(Conv2D(32, (3, 3)))
+model.add(Activation('relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+
+model.add(Conv2D(64, (3, 3)))
+model.add(Activation('relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+
+model.add(Flatten())
+model.add(Dense(64))
+model.add(Activation('relu'))
+model.add(Dropout(0.5))
+model.add(Dense(len(class_labels)))  # Use number of classes for the final Dense layer
+model.add(Activation('softmax'))  # Use softmax for multi-class classification
+
+# Compile the model
+model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+# Train the model
+model.fit(x_train, y_train, batch_size=32, verbose=1, epochs=20, validation_data=(x_test, y_test), shuffle=False)
+
+# Save the model
+model.save('BrainTumorMultiClassModel.h5')
