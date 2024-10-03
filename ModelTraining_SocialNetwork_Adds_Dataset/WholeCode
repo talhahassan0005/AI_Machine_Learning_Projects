@@ -1,0 +1,79 @@
+import numpy as np  # Linear Algebra
+import pandas as pd  # Data Processing, CSV File I/O
+import matplotlib.pyplot as plt  # Visualization
+import seaborn as sns  # Advanced Visualization
+from sklearn.preprocessing import StandardScaler  # Data Scaling
+import sklearn.linear_model as lm
+import sklearn.metrics as metrics
+import warnings
+
+warnings.filterwarnings('ignore')
+
+#Load DataSet of Social Network Ads
+df = pd.read_csv('/Social_Network_Ads.csv')
+
+#Preprocessing on the Data set , we are catching the Estimatedsalary ,Purchased and Age columns
+df=df.iloc[:,2:]
+
+
+#Train_Test Split
+from sklearn.model_selection import train_test_split
+x_train,x_test,y_train,y_test=train_test_split(df.drop('Purchased',axis=1),
+                                                      df['Purchased'],
+                                                      test_size=0.3,
+                                                      random_state=0)
+
+#Data is showing Age	, EstimatedSalary
+x_train
+
+#Standard Scaler
+
+scaler=StandardScaler()
+
+scaler.fit(x_train)
+# fit the scaler to train set, it will learn the parameter
+x_train_scaled=scaler.transform(x_train)
+
+# use the same parameter to transform test set
+x_test_scaled=scaler.transform(x_test)
+
+#check that the Mean and Standard Daviation is Same 
+scaler.mean_
+
+#Convert the Arrays into DataFrames
+
+x_train_scaled # this is the numpy array so we have to convert into Dataframes given below 
+
+x_train_scaled=pd.DataFrame(x_train_scaled,columns=x_train.columns)
+x_test_scaled=pd.DataFrame(x_test_scaled,columns=x_test.columns)
+
+#Check that the How the data Look in Mathematical form
+np.round(x_train.describe(),1)
+
+np.round(x_train_scaled.describe(),1) # we have prove that Standard Daviation and mean both have same for EstimatedSalary and Age
+
+
+
+#Effect of Scaling
+fig , (ax1 , ax2) = plt.subplots(ncols=2, figsize=(12,5))
+
+ax1.scatter(x_train['Age'],x_train['EstimatedSalary'])
+ax1.set_title("Before Scaling")
+ax2.scatter(x_train_scaled['Age'],x_train_scaled['EstimatedSalary'])
+ax2.set_title("After Scaling")
+plt.show()
+
+
+
+#Why Scaling is Important , Accuracy is compared Before Scaling and After Scaling 
+lr=lm.LogisticRegression()
+lr_scaled = lm.LogisticRegression()
+
+lr.fit(x_train,y_train)
+lr_scaled.fit(x_train_scaled,y_train)
+
+y_pred = lr.predict(x_train)
+y_pred_scaled = lr_scaled.predict(x_train_scaled)
+
+print('Actual', metrics.accuracy_score(y_train,y_pred))
+print('Scaled',metrics.accuracy_score(y_train,y_pred_scaled))
