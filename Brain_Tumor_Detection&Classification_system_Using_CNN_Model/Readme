@@ -1,0 +1,8 @@
+Brain_Tumor_Detection&Classification_system_Using_CNN_Model
+
+
+This code implements a Convolutional Neural Network (CNN) for classifying brain tumor images into four categories: notumor, glioma, meningioma, and pituitary. Initially, it defines the paths for training and testing datasets, then loads images from these directories, assigning labels based on their respective folder names. The images are resized to 64x64 pixels and normalized for consistency in input.
+
+The dataset is split into training and testing sets using an 80-20 ratio. A sequential CNN model is built with several convolutional and max pooling layers to extract features from the images, followed by dense layers to classify the features into the defined tumor categories. The model is compiled with the Adam optimizer and uses sparse categorical crossentropy as the loss function.
+
+Finally, the model is trained for 20 epochs, and the trained model is saved as BrainTumorMultiClassModel.h5, allowing for future inference on unseen data. This approach automates the diagnosis of brain tumors, enhancing speed and accuracy in medical settings.
