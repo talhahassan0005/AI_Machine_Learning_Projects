@@ -1,0 +1,144 @@
+import os
+import cv2
+import numpy as np
+from PIL import Image
+import matplotlib.pyplot as plt
+import seaborn as sns
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Activation, Flatten, Dense, Dropout
+from tensorflow.keras.utils import normalize
+from sklearn.model_selection import train_test_split
+import tensorflow as tf
+
+# Step 1: Define initial paths for tumor classes
+image_directories = {
+    'glioma': '/content/drive/MyDrive/DataSets/Testing/glioma',
+    'pituitary': '/content/drive/MyDrive/DataSets/Testing/pituitary',
+    'meningioma': '/content/drive/MyDrive/DataSets/Testing/meningioma',
+    'notumor': '/content/drive/MyDrive/DataSets/Testing/notumor'
+}
+
+# Load dataset
+dataset = []
+labels = []
+
+# Function to load images from directories
+def load_images_from_directory(directory, label_value):
+    images = os.listdir(directory)
+    skipped_images = 0
+
+    for image_name in images:
+        if not image_name.lower().endswith(('.jpg', '.jpeg', '.png', '.tif', '.bmp')):
+            print(f"Skipping unsupported file type: {image_name}")
+            skipped_images += 1
+            continue
+
+        image_path = os.path.join(directory, image_name)
+        image = cv2.imread(image_path)
+
+        if image is None:
+            print(f"Warning: Unable to read image {image_name}. Skipping this file.")
+            skipped_images += 1
+            continue
+
+        try:
+            # Convert image to RGB and resize to (64, 64)
+            image = Image.fromarray(image, 'RGB')
+            image = image.resize((64, 64))
+            dataset.append(np.array(image))
+            labels.append(label_value)
+        except Exception as e:
+            print(f"Error processing image {image_name}: {str(e)}")
+            skipped_images += 1
+
+    print(f"Total images skipped in '{directory}': {skipped_images}")
+
+# Helper function to build the CNN model
+def build_model(input_shape=(64, 64, 3)):
+    model = Sequential()
+    model.add(Conv2D(32, (3, 3), input_shape=input_shape, padding='same'))
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+
+    model.add(Conv2D(32, (3, 3), padding='same'))
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+
+    model.add(Conv2D(64, (3, 3), padding='same'))
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+
+    model.add(Flatten())
+    model.add(Dense(64))
+    model.add(Activation('relu'))
+    model.add(Dropout(0.5))
+    model.add(Dense(4))  # Adjust for the number of output classes: 4 (glioma, pituitary, meningioma, notumor)
+    model.add(Activation('softmax'))
+
+    return model
+
+# Initialize and compile the model
+model = build_model()
+model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+# Continual Learning Function with Replay
+def continual_learning_with_replay(model, new_data, new_labels, x_train, y_train, epochs=10):
+    # Create replay buffer using existing training data
+    replay_buffer = {label: x_train[y_train == label] for label in np.unique(y_train)}
+
+    # Combine new data with replay buffer
+    combined_data = np.concatenate([new_data, *replay_buffer.values()])
+    combined_labels = np.concatenate([new_labels, *[np.full(replay_buffer[label].shape[0], label) for label in replay_buffer.keys()]])
+
+    # Shuffle combined data and labels
+    indices = np.arange(len(combined_data))
+    np.random.shuffle(indices)
+    combined_data = combined_data[indices]
+    combined_labels = combined_labels[indices]
+
+    # Train the model using combined data (new + replay buffer)
+    model.fit(combined_data, combined_labels, batch_size=32, epochs=epochs, verbose=1)
+    return model
+
+# Step-by-step continual learning on each class
+# 1. Train on glioma first
+load_images_from_directory(image_directories['glioma'], 0)
+glioma_data = np.array(dataset)
+glioma_labels = np.array(labels)
+x_train, x_test, y_train, y_test = train_test_split(glioma_data, glioma_labels, test_size=0.2, random_state=0)
+x_train = normalize(x_train, axis=1)
+x_test = normalize(x_test, axis=1)
+
+# Train initial model
+model.fit(x_train, y_train, batch_size=32, epochs=10, verbose=1, validation_data=(x_test, y_test))
+print("Initial training on glioma complete!")
+
+# 2. Train with replay using pituitary data
+dataset.clear()  # Clear existing dataset
+labels.clear()   # Clear existing labels
+load_images_from_directory(image_directories['pituitary'], 1)
+pituitary_data = np.array(dataset)
+pituitary_labels = np.array(labels)
+pituitary_data = normalize(pituitary_data, axis=1)
+
+# Apply continual learning with replay
+model = continual_learning_with_replay(model, pituitary_data, pituitary_labels, x_train, y_train, epochs=10)
+print("Continual learning applied with pituitary data!")
+
+# 3. Train with replay using meningioma data
+dataset.clear()
+labels.clear()
+load_images_from_directory(image_directories['meningioma'], 2)
+meningioma_data = np.array(dataset)
+meningioma_labels = np.array(labels)
+meningioma_data = normalize(meningioma_data, axis=1)
+
+# Apply continual learning with replay
+model = continual_learning_with_replay(model, meningioma_data, meningioma_labels, x_train, y_train, epochs=10)
+print("Continual learning applied with meningioma data!")
+
+
+
+
+print("Model saved successfully!")
+
