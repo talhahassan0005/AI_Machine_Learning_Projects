@@ -1,0 +1,32 @@
+Brain Tumor Detection and Classification Using Continual Learning
+This repository contains a project focused on the continual learning-based detection and classification of brain tumors using a deep learning model. The system classifies tumors into different categories 
+(such as glioma, pituitary, and meningioma) and supports incremental learning to incorporate new tumor classes or data over time without losing previously acquired knowledge.
+
+
+Project Overview
+Brain tumors are life-threatening conditions that require accurate and timely detection For effective treatment.
+Conventional machine learning models often struggle to maintain their performance when new data or tumor classes are introduced, a phenomenon known as catastrophic forgetting.
+This project leverages continual learning strategies to develop a robust brain tumor detection and classification system that can be incrementally updated as new data becomes available.
+
+Features
+Multi-Class Classification: The model is designed to classify different types of brain tumors, including glioma, pituitary, and meningioma.
+Continual Learning: Supports learning new tumor classes and updating the model without retraining from scratch, minimizing data loss and preserving existing knowledge.
+Replay Buffer Strategy: Integrates a replay buffer to maintain a small subset of the previously learned classes While learning new data.
+Preprocessing and Data Augmentation: Includes pre-processing and augmentation steps to ensure the model is robust and generalized.
+Dataset
+The dataset used For this project includes MRI images categorized into four classes: glioma, pituitary, meningioma, and notumor. The images are preprocessed, resized to 64x64 pixels, and normalized before training.
+
+You can download the dataset from the Kaggle Brain Tumor Dataset.
+
+Model Architecture
+The deep learning model For this project is based on a Convolutional Neural Network (CNN) architecture, which consists of the following layers:
+
+Input Layer: Takes images of size (64, 64, 3).
+Convolutional Layers: Three convolutional layers with ReLU activation and max pooling.
+Flatten Layer: Converts the 2D matrix data to a 1D vector.
+Dense Layers: Two dense layers with ReLU and softmax activations For multi-class classification.
+Continual Learning Approach
+The project employs a continual learning methodology using the following strategies:
+
+Replay Buffer: Stores a subset of previously learned data, ensuring that when the model is updated with new classes, it does not forget prior knowledge.
+Incremental Training: Integrates new data and labels While preserving older classes, allowing the model to adapt over time without retraining from scratch.
