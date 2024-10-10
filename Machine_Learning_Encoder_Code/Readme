@@ -1,0 +1,11 @@
+Project Summary: Customer Classification Using Categorical Data
+This project involves classifying customers using a dataset with categorical features. The main tasks include loading the dataset, splitting it into training and test sets,
+and applying encoding to categorical data to prepare it for machine learning models.
+
+Key steps:
+
+Data Preprocessing: The data is split into features (X) and labels (Y), and then divided into training and test sets.
+Encoding:
+OrdinalEncoder is used to convert categorical features (e.g., customer type, education level) into numerical values.
+LabelEncoder is applied to the target variable (customer classification).
+The encoded data will be ready for use in machine learning models to predict customer classes.
